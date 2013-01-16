@@ -1,4 +1,1 @@
-scratches
-=========
-
-Some scratches
+Hello.\n
