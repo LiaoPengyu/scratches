@@ -48,7 +48,7 @@ sudo easy_install rope
 #+BEGIN_SRC bash
 sudo easy_install ropemacs
 #+END_SRC
-将如下代码添加到之前修改的pymacs-autolola.el文件中
+将如下代码添加到之前修改的pymacs-autoload.el文件中
 #+BEGIN_SRC el
 (require 'pymacs)
 (pymacs-load "ropemacs" "rope-")
