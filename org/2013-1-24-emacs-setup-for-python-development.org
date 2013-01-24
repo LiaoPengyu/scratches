@@ -63,7 +63,7 @@ purcell的配置已经装了flymake,只需要安装pyflakes
 sudo easy_install pyflakes
 #+END_SRC
 * 将ropemacs集成到auto-complete
-将如下代码添加到init-auto-complete.el(或者.emacs)
+将如下代码添加到init-auto-complete.el
 #+BEGIN_SRC el
 (ac-ropemacs-initialize)
 (add-hook 'python-mode-hook
@@ -83,7 +83,6 @@ def set_prefs(prefs):
 prefs.add('python_path', '/usr/local/google_appengine')
 #+END_EXAMPLE
 * 参考
-[[http://stackoverflow.com/questions/12212473/jumping-to-python-library-sources-with-epy-emacs][Jumping to Python library sources with epy/emacs]]
-
+[[http://stackoverflow.com/questions/12212473/jumping-to-python-library-sources-with-epy-emacs][Jumping to Python library sources with epy/emacs]]\\
 [[http://www.yilmazhuseyin.com/blog/dev/emacs-setup-python-development/][Emacs setup for python development]]
 
