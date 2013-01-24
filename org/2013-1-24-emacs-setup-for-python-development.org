@@ -1,0 +1,88 @@
+#+BEGIN_HTML
+---
+layout: post
+title: 配置emacs的Python开发环境
+categories: emacs
+tags : [emacs, Python]
+comments: true
+---
+{% include JB/setup %}
+#+END_HTML
+折腾了一个上午,记录下我配置emacs的Python开发环境过程.
+
+PS:我使用[[https://github.com/purcell/emacs.d][purcell]]的emacs配置,他将emacs的配置完全的模块化,卸载或添加新插件变得十分的简单.
+
+* 安装pymacs
+python端和emacs端都需要安装,先从[[http://pymacs.progiciels-bpi.ca/][Pymacs framework]]下载pymacs.
+#+BEGIN_SRC bash
+tar -zxvf pymacs.tar
+cd pymacs
+sudo make install
+#+END_SRC
+
+测试是否安装成功:
+#+BEGIN_SRC py :results output raw
+from Pymacs import version
+print version
+#+END_SRC
+
+然后将解压出来的文件夹中的pymacs.el放到emacs的载入目录中.
+使用emacs24的可先用packages安装pymacs,然后将pymacs.el替换掉.
+#+BEGIN_SRC bash
+sudo cp pymacs/pymacs.el ~/.emacs.d/YOU/LOAD/PATH
+#+END_SRC
+在~/.emacs.d/elpa/pymacs-VERSION/pymacs-autoload.el中加入如下代码:
+#+BEGIN_SRC el
+(autoload 'pymacs-apply "pymacs")
+(autoload 'pymacs-call "pymacs")
+(autoload 'pymacs-eval "pymacs" nil t)
+(autoload 'pymacs-exec "pymacs" nil t)
+(autoload 'pymacs-load "pymacs" nil t)
+#+END_SRC
+* 安装rope
+可使用 `easy\_install` 或 `pip` 安装.
+#+BEGIN_SRC bash
+sudo easy_install rope
+#+END_SRC
+* 安装ropemacs
+#+BEGIN_SRC bash
+sudo easy_install ropemacs
+#+END_SRC
+将如下代码添加到之前修改的pymacs-autolola.el文件中
+#+BEGIN_SRC el
+(require 'pymacs)
+(pymacs-load "ropemacs" "rope-")
+#+END_SRC
+* 安装ropemode
+#+BEGIN_SRC bash
+sudo easy_install ropemode
+#+END_SRC
+* 配置flymake
+purcell的配置已经装了flymake,只需要安装pyflakes
+#+BEGIN_SRC bash
+sudo easy_install pyflakes
+#+END_SRC
+* 将ropemacs集成到auto-complete
+将如下代码添加到init-auto-complete.el(或者.emacs)
+#+BEGIN_SRC el
+(ac-ropemacs-initialize)
+(add-hook 'python-mode-hook
+    (lambda ()
+         (add-to-list 'ac-sources 'ac-source-ropemacs)))
+#+END_SRC
+
+好了,大功告成.常用的功能是rope-goto-defition(快捷键C-c g),可跳转到python内建类库.
+如果希望支持跳转到第三方库,可修改.ropeproject/config.py,将如下代码加入到`set\_prefs`函数:
+#+BEGIN_SRC py
+def set_prefs(prefs):
+    ...
+    prefs.add('python_path', '<path to your external library>')
+#+END_SRC
+例如:
+#+BEGIN_EXAMPLE
+prefs.add('python_path', '/usr/local/google_appengine')
+#+END_EXAMPLE
+* 参考
+[[http://stackoverflow.com/questions/12212473/jumping-to-python-library-sources-with-epy-emacs][Jumping to Python library sources with epy/emacs]]
+[[http://www.yilmazhuseyin.com/blog/dev/emacs-setup-python-development/][Emacs setup for python development]]
+

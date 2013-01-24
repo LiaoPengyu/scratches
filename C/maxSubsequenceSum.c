@@ -7,10 +7,10 @@ MaxSubsequenceSum( const int seq[], int N )
   for( j=0; j<N; j++ ) {
     tmpSum += seq[j];
 
-    if( tmpSum > MaxSum ) 
+    if( tmpSum > MaxSum )
       MaxSum = tmpSum;
-    else if( tmpSum < 0 ) 
-      tmpSum = 0;        
-  }                         
-  return MaxSum;                 
+    else if( tmpSum < 0 )
+      tmpSum = 0;
+  }
+  return MaxSum;
 }
