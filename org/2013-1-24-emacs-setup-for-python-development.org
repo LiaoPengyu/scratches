@@ -83,6 +83,6 @@ def set_prefs(prefs):
 prefs.add('python_path', '/usr/local/google_appengine')
 #+END_EXAMPLE
 * 参考
-[[http://stackoverflow.com/questions/12212473/jumping-to-python-library-sources-with-epy-emacs][Jumping to Python library sources with epy/emacs]]
+[[http://stackoverflow.com/questions/12212473/jumping-to-python-library-sources-with-epy-emacs][Jumping to Python library sources with epy/emacs]]  
 [[http://www.yilmazhuseyin.com/blog/dev/emacs-setup-python-development/][Emacs setup for python development]]
 
