@@ -1,10 +1,8 @@
 import os
-import dumbo
 SEP=" "
 
 class Mapper():
     def __init__(self):
-        self.min_sup = self.params["ms"]
         self.cand1   = open("cand1.txt", 'r')
         self.fqTrans = open("fqTrans.txt", 'r')
 
@@ -27,11 +25,23 @@ class Mapper():
 
 class Reducer():
     def __init__(self):
-        self.msn =int(self.params["msn"])
+        pass
 
     def __call__(self, key, values):
         sumv = sum(values)
         yield key, sumv
 
+class Fliter():
+    def __init__(self):
+        self.msn = int(self.params["msn"])
+
+    def __call__(self, key, value):
+        if int(value) >= self.msn:
+            key, value
+
 if __name__ == "__main__":
-    dumbo.run(Mapper, Reducer)
+    import dumbo
+    job = dumbo.Job()
+    job.additer(Mapper, Reducer)
+    job.additer(Fliter)
+    job.run()
