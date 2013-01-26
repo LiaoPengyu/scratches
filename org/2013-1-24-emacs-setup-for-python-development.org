@@ -31,13 +31,18 @@ print version
 #+BEGIN_SRC bash
 sudo cp pymacs/pymacs.el ~/.emacs.d/YOU/LOAD/PATH
 #+END_SRC
-在~/.emacs.d/elpa/pymacs-VERSION/pymacs-autoload.el中加入如下代码:
+在~/.emacs.d/init-python-mode.el中加入如下代码,打开python文件时自动打开ropemacs-mode
 #+BEGIN_SRC el
-(autoload 'pymacs-apply "pymacs")
-(autoload 'pymacs-call "pymacs")
-(autoload 'pymacs-eval "pymacs" nil t)
-(autoload 'pymacs-exec "pymacs" nil t)
-(autoload 'pymacs-load "pymacs" nil t)
+(eval-after-load 'python
+  '(progn
+     (autoload 'pymacs-apply "pymacs")
+     (autoload 'pymacs-call "pymacs")
+     (autoload 'pymacs-eval "pymacs" nil t)
+     (autoload 'pymacs-exec "pymacs" nil t)
+     (autoload 'pymacs-load "pymacs" nil t)
+     (message "loading ropemacs")
+     (pymacs-load "ropemacs" "rope-")
+     (setq ropemacs-enable-autoimport t)))
 #+END_SRC
 * 安装rope
 可使用 `easy\_install` 或 `pip` 安装.

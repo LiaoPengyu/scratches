@@ -473,7 +473,8 @@ class Mapper():
                 #yield msn,msn
                 for itemsets in find_frequent_itemsets(trans, msn):
                     if len(itemsets[0])==1:
-                        yield (itemsets[0][0], itemsets[0][0]), itemsets[1]
+                        # continu
+                        yield (itemsets[0][0], itemsets[0][0]), itemsets[1][0]
                         continue
                     itemsets[0].sort()
                     yield itemsets[0],(itemsets[1],n)
@@ -485,13 +486,12 @@ class Mapper():
             for itemsets in find_frequent_itemsets(trans,msn):
                 keys = itemsets[0]
                 if len(keys)==1:
-                    yield (itemsets[0][0], itemsets[0][0]), itemsets[1]
                     continue
                 keys.sort()
                 yield keys,(itemsets[1],n)
-        # for item,count in itemsn.items():
-        #     keys = (item,item)
-        #     yield keys,count
+        #for item,count in itemsn.items():
+        #    keys=(item,item)
+        #    yield keys,count
 
 class Reducer():
     def __init__(self):
@@ -499,17 +499,17 @@ class Reducer():
 
     def __call__(self,key,values):
         if len(key)==2 and key[0] == key[1]:
-            sumv = sum(values)
-            #sumt = sumt +str(v)+","
+            sumv = 0
+            sumt = ""
+            for v in values:
+                sumv += v
+                sumt = sumt +str(v)+","
             #if sumv>=self.msn:
             yield key[0],sumv
         else:
-            #sum1 = sum(v1[0] for v1 in values)
-            #sum2 = sum(v2[1] for v2 in values)
-            #cc = len(values)
             sum1 = 0
             sum2 = 0
-            cc   = 0
+            cc = 0
             for v in values:
                 sum1 += v[0]
                 sum2 += v[1]

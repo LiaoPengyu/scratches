@@ -40,7 +40,7 @@ def find_frequent_itemsets(transactions, minimum_support, include_support=True):
     lt=len(transactions)-1
     for i in xrange(lt,-1,-1):
     #for transaction1 in transactions:
-        transaction = map(int,transactions[i].split(SEP))
+        transaction = transactions[i].split(SEP)
         processed = []
         for item in transaction:
             items[item] += 1
@@ -51,7 +51,8 @@ def find_frequent_itemsets(transactions, minimum_support, include_support=True):
     #processed_transactions=transactions
 
     # Remove infrequent items from the item support dictionary.
-    items = dict((item, support) for item, support in items.iteritems() if support >= minimum_support)
+    items = dict((item, support) for item, support in items.iteritems()
+        if support >= minimum_support)
 
     # Build our FP-tree. Before any transactions can be added to the tree, they
     # must be stripped of infrequent items and their surviving items must be
@@ -138,31 +139,32 @@ class FPTree(object):
         """Add the given node to the route through all nodes for its item."""
         assert self is point.tree
 
-        route = self._routes.get(point.item, None)
-        if route:
-            route[1].neighbor = point
+        try:
+            route = self._routes[point.item]
+            route[1].neighbor = point # route[1] is the tail
             self._routes[point.item] = self.Route(route[0], point)
-        else:
+        except KeyError:
+            # First node for this item; start a new route.
             self._routes[point.item] = self.Route(point, point)
 
     def items(self):
         """
-        Generate one 2-tuples for each item represented in the tree. The first
-        element of the tuple is the item itself, and the second element is a
-        generator that will yield the nodes in the tree that belong to the item.
-        """
+Generate one 2-tuples for each item represented in the tree. The first
+element of the tuple is the item itself, and the second element is a
+generator that will yield the nodes in the tree that belong to the item.
+"""
         for item in self._routes.iterkeys():
             yield (item, self.nodes(item))
 
     def nodes(self, item):
         """
-        Generates the sequence of nodes that contain the given item.
-        """
+Generates the sequence of nodes that contain the given item.
+"""
 
         try:
             node = self._routes[item][0]
-        except KeyError, e:
-            raise KeyError(e)
+        except KeyError:
+            return
 
         while node:
             yield node
@@ -222,7 +224,6 @@ def conditional_tree_from_paths(paths, minimum_support):
     for path in paths:
         if condition_item is None:
             condition_item = path[-1].item
-        assert condition_item == path[-1].item
 
         point = tree.root
         for node in path:
@@ -235,16 +236,16 @@ def conditional_tree_from_paths(paths, minimum_support):
                 point.add(next_point)
                 tree._update_route(next_point)
             point = next_point
+
     assert condition_item is not None
 
     # Calculate the counts of the non-leaf nodes.
     for path in tree.prefix_paths(condition_item):
-        count = path[-1].count 
+        count = None
         for node in reversed(path):
-            node._count += count
-            #if count is not None:
-            #    node._count += count
-            #count = node.count  #It's HERE!!!!!!!!
+            if count is not None:
+                node._count += count
+            count = node.count
 
     # Eliminate the nodes for any items that are no longer frequent.
     for item in items:
@@ -252,16 +253,14 @@ def conditional_tree_from_paths(paths, minimum_support):
         if support < minimum_support:
             # Doesn't make the cut anymore
             for node in tree.nodes(item):
-                assert node.parent != None
-                node.parent.remove(node)
-                # if node.parent is not None:
-                #     node.parent.remove(node)
+                if node.parent is not None:
+                    node.parent.remove(node)
 
     # Finally, remove the nodes corresponding to the item for which this
     # conditional tree was generated.
     for node in tree.nodes(condition_item):
-        #if node.parent is not None: # the node might already be an orphan
-        node.parent.remove(node)
+        if node.parent is not None: # the node might already be an orphan
+            node.parent.remove(node)
 
     return tree
 
@@ -291,31 +290,11 @@ class FPNode(object):
         Checks to see if this node contains a child node for the given item.
         If so, that node is returned; otherwise, `None` is returned.
         """
-        return self._children.get(item, None)
-        # try:
-        #     return self._children[item]
-        # except KeyError:
-        #     return None
 
-    def merge(self, other):
-        """
-        merge two node,
-        both of the two nodes must be in the same tree.
-        """
-        assert self.item == other.item
-
-        self._count += other.count
-        other.parent = None
-        other.tree._removed(other)
-
-        if not other.has_children():
-            return
-        # merge children
-        for child in other.children:
-            if child.item in self._children:
-                self._children[child.item].merge(child)
-            else:
-                self.add(child)
+        try:
+            return self._children[item]
+        except KeyError:
+            return None
 
     def remove(self, child):
         try:
@@ -324,19 +303,15 @@ class FPNode(object):
                 child.parent = None
                 self._tree._removed(child)
                 for sub_child in child.children:
-                    if sub_child.item in self._children.keys():
-                        self._children[sub_child.item].merge(sub_child)
-                    else:
+                    try:
+                        # Merger case: we already have a child for that item, so
+                        # add the sub-child's count to our child's count.
+                        self._children[sub_child.item]._count += sub_child.count
+                        sub_child.parent = None # it's an orphan now
+                    except KeyError:
+                        # Turns out we don't actually have a child, so just add
+                        # the sub-child as our own child.
                         self.add(sub_child)
-                    # try:
-                    #     # Merger case: we already have a child for that item, so
-                    #     # add the sub-child's count to our child's count.
-                    #     self._children[sub_child.item]._count += sub_child.count
-                    #     sub_child.parent = None # it's an orphan now
-                    # except KeyError:
-                    #     # Turns out we don't actually have a child, so just add
-                    #     # the sub-child as our own child.
-                    #     self.add(sub_child)
                 child._children = {}
             else:
                 raise ValueError("that node is not a child of this node")
@@ -378,9 +353,7 @@ class FPNode(object):
         return len(self._children) == 0
 
     def parent():
-        """
-        The node's parent.
-        """
+        doc = "The node's parent."
         def fget(self):
             return self._parent
         def fset(self, value):
@@ -393,10 +366,10 @@ class FPNode(object):
     parent = property(**parent())
 
     def neighbor():
-        """
-        The node's neighbor; the one with the same value that is "to the right"
-        of it in the tree.
-        """
+        doc = """
+The node's neighbor; the one with the same value that is "to the right"
+of it in the tree.
+"""
         def fget(self):
             return self._neighbor
         def fset(self, value):
@@ -407,10 +380,6 @@ class FPNode(object):
             self._neighbor = value
         return locals()
     neighbor = property(**neighbor())
-
-
-    def has_children(self):
-        return self._children
 
     @property
     def children(self):
@@ -457,56 +426,67 @@ if __name__ == '__main__':
 
 class Mapper():
     def __init__(self):
-        self.min_sup = float(self.params["ms"])
+        self.min_sup = self.params["ms"]
         self.p = int(self.params["p"])
-
-    def __call__(self, data):
-        trans = []
-        itemsn = defaultdict(lambda: 0)  # mapping from items to their supports
-        n = 0
-        totleLine = 0
-        for docID, doc in data:
+    def __call__(self,data):
+        trans=[]
+        itemsn = defaultdict(lambda: 0) # mapping from items to their supports
+        AFIS=[]
+        n=0
+        datastore = ""
+        for docID,doc in data:
             tr = doc.strip("\r").strip("\n").strip(" ")
             for item in tr.split(" "):
-                itemsn[int(item)] += 1
+                itemsn[item] += 1
             trans.append(tr)
-            n = n + 1
-            if n == self.p:
-                msn = int(n * self.min_sup * 0.9)
+            n=n+1
+            if n==self.p:
+                yield (0,1),(1,0)
+                msn=int(n*float(self.min_sup)*0.9)
+                #yield msn,msn
                 for itemsets in find_frequent_itemsets(trans, msn):
-                    if len(itemsets[0]) == 1:
+                    if len(itemsets[0])==1:
                         continue
                     itemsets[0].sort()
-                    yield itemsets[0], itemsets[1]
-                trans = []
-                totleLine += n
-                n = 0
-        totleLine += n
-        totleMsn = totleLine * self.min_sup
-        if n > 0:
-            msn = int(n * float(self.min_sup) * 0.9)
-            for itemsets in find_frequent_itemsets(trans, msn):
-                if len(itemsets[0]) == 1:
-                    continue
+                    yield itemsets[0],(itemsets[1],n)
+                trans=[]
+                n=0
+        if n>0:
+            yield (0,1),(1,0)
+            msn = int(n*float(self.min_sup)*0.85)
+            for itemsets in find_frequent_itemsets(trans,msn):
                 keys = itemsets[0]
+                if len(keys)==1:
+                    continue
                 keys.sort()
-                yield keys, itemsets[1]
-        for item, count in itemsn.items():
-            if count >= totleMsn:
-                yield [item, ], count
-        yield [0,0], totleLine
-
+                yield keys,(itemsets[1],n)
+        for item,count in itemsn.items():
+            keys=(item,item)
+            yield keys,count
 
 class Reducer():
     def __init__(self):
-        self.msn = int(self.params["msn"])
+        self.msn =int(self.params["msn"])
 
-    def __call__(self, key, values):
-        #for v1, v2, msn in values:
-        #yield key, ":" + ' '.join((str(v1), str(v2), str(msn), str(self.pid)))
-        sumv = sum(values)
-        yield key, str(sumv)
-
+    def __call__(self,key,values):
+        if len(key)==2 and key[0] == key[1]:
+            sumv = 0
+            sumt = ""
+            for v in values:
+                sumv += v
+                sumt = sumt +str(v)+","
+            if sumv>=self.msn:
+                yield key[0],sumv
+        else:
+            sum1 = 0
+            sum2 = 0
+            cc = 0
+            for v in values:
+                sum1 += v[0]
+                sum2 += v[1]
+                cc += 1
+            yield key,str(sum1)+","+str(sum2)+","+str(cc)
+                #yield key, str(v[0])+" : "+str(v[1])
 
 if __name__ == "__main__":
     import dumbo
