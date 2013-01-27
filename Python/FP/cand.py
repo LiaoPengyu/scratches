@@ -473,11 +473,12 @@ class Mapper():
             n = n + 1
             if n == self.p:
                 msn = int(n * self.min_sup * 0.9)
+                yield [0, 0], (1, 0, n)
                 for itemsets in find_frequent_itemsets(trans, msn):
                     if len(itemsets[0]) == 1:
                         continue
                     itemsets[0].sort()
-                    yield itemsets[0], itemsets[1]
+                    yield itemsets[0], (1, itemsets[1], n)
                 trans = []
                 totleLine += n
                 n = 0
@@ -485,16 +486,14 @@ class Mapper():
         totleMsn = totleLine * self.min_sup
         if n > 0:
             msn = int(n * float(self.min_sup) * 0.9)
+            yield [0, 0], (1, 0, n)
             for itemsets in find_frequent_itemsets(trans, msn):
                 if len(itemsets[0]) == 1:
                     continue
-                keys = itemsets[0]
-                keys.sort()
-                yield keys, itemsets[1]
+                keys = itemsets[0].sort()
+                yield keys, (1, itemsets[1], n)
         for item, count in itemsn.items():
-            if count >= totleMsn:
-                yield [item, ], count
-        yield [0,0], totleLine
+            yield [item, ], (1, count, totleLine)
 
 
 class Reducer():
@@ -504,10 +503,24 @@ class Reducer():
     def __call__(self, key, values):
         #for v1, v2, msn in values:
         #yield key, ":" + ' '.join((str(v1), str(v2), str(msn), str(self.pid)))
-        sumv = sum(values)
-        yield key, str(sumv)
+        sumv = reduce(lambda s, n: (s[0] + n[0], s[1] + n[1], s[2]+ n[2]), values)
+        yield key, sumv
+
+class Fliter():
+    def __init__(self):
+        self.msn = int(self.params["msn"])
+
+    def __call__(self, key, value):
+        if len(key) == 1:
+            if value[1] >= self.msn:
+                yield key, value
+        else:
+            yield key, value
 
 
 if __name__ == "__main__":
     import dumbo
-    dumbo.run(Mapper, Reducer)
+    job = dumbo.Job()
+    job.additer(Mapper, Reducer)
+    job.additer(Fliter)
+    job.run()
