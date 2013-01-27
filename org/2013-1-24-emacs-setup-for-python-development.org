@@ -1,7 +1,7 @@
 #+BEGIN_HTML
 ---
 layout: post
-title: 配置emacs的Python开发环境
+title: 配置Emacs的Python开发环境
 categories: emacs
 tags : [emacs, Python]
 comments: true
