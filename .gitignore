@@ -1,3 +1,5 @@
 .#*
+.metadata/
+TAGS
 .DS_Store
 .ropeproject/
