@@ -8,12 +8,13 @@ def curry(f, *args, **kws):
         varNames, varCount = fcode.co_varnames, fcode.co_argcount
         if not varCount: # 无参函数直接返回
             return f
-        argsNum   = varCount - len(kwsVals) # 非关键字参数个数
         argsNames = varNames[:argsNum - 1]  # 非关键字参数名
         argsDict = dict(zip(varNames,          # 非关键字参数，
-                            argsNum * [None])) # 注意:非关键字参数也可以按关键字参数方式传入
-        kwsDict = dict(zip(reversed(varNames), # 关键字参数
-                           reversed(kwsVals)))
+                            len(argsNames) * [None])) # 注意:非关键字参数也可以按关键字参数方式传入
+        kwsDict  = dict(zip(reversed(varNames),
+                            len(kwsVals) * [None]))
+        kwsDict_const = dict(zip(reversed(varNames), # 关键字参数
+                                 reversed(kwsVals)))
     def curried(*cargs, **ckws):
 
         nargs, nkws = args+fargs, kws.copy()
