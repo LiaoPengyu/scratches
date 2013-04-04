@@ -1,0 +1,77 @@
+#+BEGIN_HTML
+---
+layout: post
+title: Ruby实现DSL的一个简单例子
+categories: [Ruby, DSL]
+tags : [ruby, dsl]
+comments: true
+---
+{% include JB/setup %}
+#+END_HTML
+记得看Programming Ruby的时候里面有个例子实现简单的DSL,主要就是用method\_missing抓取函数名并打印.
+代码如下:
+#+BEGIN_SRC rb
+class SimpleBuilder < BasicObject
+  def __puts_at_indent__(string)
+    ::Kernel.puts " " * @indent + string end
+  def method_missing(name, *args, &block)
+    @indent ||= 0
+    __puts_at_indent__("<#{name}>")
+    @indent += 2
+    __puts_at_indent__(args.join) unless args.empty? 
+    yield if ::Kernel.block_given?
+    @indent -= 2
+    __puts_at_indent__("</#{name}>")
+  end
+end
+r = SimpleBuilder.new
+r.person do
+  r.name "Dave"
+  r.address do
+    r.street "123 Main"
+    r.city "Pleasantville"
+  end
+end
+#+END_SRC
+例子举得挺有意思,但是每次调用都要明确指定receiver有点不美观了.于是改了改:
+#+BEGIN_SRC rb
+class Simple < BasicObject
+  def _puts _str
+    ::Kernel.puts ' '*@indent + _str
+  end
+  def method_missing tag, *args, &bl
+    @indent ||= 0
+    _puts "<#{tag}>"
+    @indent += 2
+    _puts args.join ' ' unless args.empty?
+    instance_exec &bl if ::Kernel.block_given?
+    @indent -= 2
+    _puts "</#{tag}>"
+  end
+end
+r = Simple.new
+r.persion do
+  name 'Dave'
+  address do
+    street "123 Main"
+    city "Plea.."
+  end
+end
+#+END_SRC
+输出都一样:
+#+BEGIN_SRC xml
+<persion>
+  <name>
+    Dave
+  </name>
+  <address>
+    <street>
+      123 Main
+    </street>
+    <city>
+      Plea..
+    </city>
+  </address>
+</persion>
+#+END_SRC
+没了..

@@ -2,12 +2,12 @@
 ---
 layout: post
 title: 配置Emacs的Python开发环境
-categories: emacs
-tags : [emacs, Python]
+categories: Emacs
+tags : [emacs, python]
 comments: true
 ---
-{% include JB/setup %}
 #+END_HTML
+{% include JB/setup %}
 折腾了一个上午,记录下我配置emacs的Python开发环境过程.
 
 PS:我使用[[https://github.com/purcell/emacs.d][purcell]]的emacs配置,他将emacs的配置完全的模块化,卸载或添加新插件变得十分的简单.

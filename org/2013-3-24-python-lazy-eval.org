@@ -1,0 +1,36 @@
+#+BEGIN_HTML
+---
+layout: post
+title: Python函数延迟执行
+categories: Python
+tags : python
+comments: true
+---
+#+END_HTML
+{% include JB/setup %}
+* 这是问题
+很喜欢python将函数作为第一类对象的特性,加上修饰器,能很优雅的实现AOP.
+昨天写代码时想完成这样一件事,根据条件将业务函数传给一个临时变量,最后再执行这个函数.
+对于无参函数可以直接把函数对象赋给临时变量,但是如果是有参函数并且参数在传给临时变量前就知道了呢?
+* 这是答案
+解决方法很简单--闭包.直接给代码:
+#+BEGIN_SRC py
+def lazy(func):
+    func.lazy = lambda *args, **kwargs: lambda: func(*args, **kwargs)
+    return func
+#+END_SRC
+* 测试一下
+#+BEGIN_SRC py
+@lazy
+def test(a, b=1, c=2):
+    print a, b, c
+temp1 = test.lazy(1, c=1)
+temp2 = lazy(test).lazy(1, c=1)
+temp1() # => 1 1 1
+temp2() # => 1 1 1
+#+END_SRC
+* 总结
+以上内容实在没什么技术含量....
+
+ps: 看了下ruby 2.0,有个新特性Enumerator::Lazy,实现Array的惰性求值,是不是很有Haskell的感觉?
+ps: 才发现ruby有个标准库functional,看到了callcc....

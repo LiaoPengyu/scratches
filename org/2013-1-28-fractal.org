@@ -3,11 +3,11 @@
 layout: post
 title: 两个生成分形(Fractal)图的Python脚本
 categories: Python
-tags : [Fractal, Python]
+tags : [fractal, python]
 comments: true
 ---
-{% include JB/setup %}
 #+END_HTML
+{% include JB/setup %}
 分形的定义「一個粗糙或零碎的幾何形狀，可以分成數個部分，且每一部分都（至少近似地）是整體縮小後的形狀」[fn:fractal]
 
 下面的Python脚本的外观和生成的图片就是著名的[[http://zh.wikipedia.org/wiki/曼德博集合][曼德博集合]],生成图片如下:
