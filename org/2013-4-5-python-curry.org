@@ -1,0 +1,68 @@
+#+BEGIN_HTML
+---
+layout: post
+title: Python函数柯里化的实现
+categories: Python
+tags : [python, functional programming]
+comments: true
+---
+{% include JB/setup %}
+#+END_HTML
+今天Haskell看到了高阶函数和[[http://en.wikipedia.org/wiki/Currying][柯里化]],想试着在python上实现.
+
+* 准备
+  柯里化在Haskell中是基本的语法,所以这在python所谓的实现是fake的,模拟而已.
+
+  上python的doc主页翻了翻,找到一些可用的东西:
+1. `method`对象有个func_defaults属性是个记录和函数所有keyword参数的默认值.
+2. `method`对象的func_code属性是个`code`实例
+  + `code`的co_argcount保存函数参数的个数(包括keywords)
+  + `code`的co_varnames属性为这些参数名的列表
+
+* 开工
+  有了这些东西,可以开工了.思路是这样的:
+  + 模拟柯里化,当参数不足时,用闭包包装到函数中
+  + 必须参数都传入后,调用函数.需要注意的是:
+    + python非keyword参数可用keyword参数方式传入,所以要同时判断args的数量和kwargs中是否包含args的变量
+    + 以keyword方式传入的参数可以被刷新
+    + python语法要求函数调用时参数列表中args要在kwargs之前,否则报错;args和kwargs不能重复传入,否则报TypeError等等.这些错误检查全部交给python.
+
+  思路也有了,代码基本就出来了:
+#+BEGIN_SRC py
+def curry(f, *args, **kwargs):
+    """
+    f should be callable
+    """
+    argCount, argNames = (lambda c, l: (c.co_argcount - l, c.co_varnames[:-l])) \
+                       (f.func_code, len(f.func_defaults or ()))
+    def curried(*targs, **tkwargs):
+        targs += args
+        tkwargs.update(kwargs)
+        if len(targs) + len(set(tkwargs.keys()) & set(argNames)) >= argCount:
+            return f(*targs, **tkwargs)
+        return curry(f, *targs, **tkwargs)
+    return curried
+
+@curry
+def test(a,b,c,d=1,e=2):
+    print a,b,c,d,e
+
+test(5, b = 4, d=3, e=2)(c = 1) # =>5 4 1 3 2
+test(c=1, e=2)(3, d=4)(5) # =>5 3 1 4 2
+#+END_SRC
+
+* 总结
+OK,算是能用了.
+然而只是能用而已,完全没有Haskell的美感.
+
+在Haskell中函数事实上只有一个参数,对于多参的函数,举例解释下:
+一个Haskell函数,比如 `add x y = x + y`, 是`add :: Num a => a -> a -> a` 类型的,
+而`->`操作符是右结合的,所以等同于`add :: Num a => (a -> (a -> a))`.
+
+即:add是一个 吃一个Num类型的数 然后返回(a -> a)类型函数的 函数.这在数学上很有美感.
+而得益于Haskell的静态类型,Haskell能动态的判断返回类型.如(add 3)是`Num a => a -> a`类型,
+而(add 3.0)则是`(add 3.4) :: Fractional a => a -> a`类型.这也使得柯里化很有实际意义.
+
+
+
+
