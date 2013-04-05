@@ -3,3 +3,6 @@
 TAGS
 .DS_Store
 .ropeproject/
+.#*
+*~
+*orig
