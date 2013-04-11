@@ -14,10 +14,10 @@ comments: true
   柯里化在Haskell中是基本的语法,所以这在python所谓的实现是fake的,模拟而已.
 
   上python的doc主页翻了翻,找到一些可用的东西:
-1. `method`对象有个func_defaults属性是个记录和函数所有keyword参数的默认值.
-2. `method`对象的func_code属性是个`code`实例
-  + `code`的co_argcount保存函数参数的个数(包括keywords)
-  + `code`的co_varnames属性为这些参数名的列表
+1. `method`对象有的func\_defaults属性记录了函数所有keyword参数的默认值.
+2. `method`对象的func\_code属性是个`code`实例
+  + `code`的co\_argcount保存函数参数的个数(包括keywords)
+  + `code`的co\_varnames属性为这些参数名的列表
 
 * 开工
   有了这些东西,可以开工了.思路是这样的:
@@ -25,7 +25,7 @@ comments: true
   + 必须参数都传入后,调用函数.需要注意的是:
     + python非keyword参数可用keyword参数方式传入,所以要同时判断args的数量和kwargs中是否包含args的变量
     + 以keyword方式传入的参数可以被刷新
-    + python语法要求函数调用时参数列表中args要在kwargs之前,否则报错;args和kwargs不能重复传入,否则报TypeError等等.这些错误检查全部交给python.
+    + python语法如:args和kwargs不能重复传入,否则报TypeError等等.这些错误检查全部交给python.
 
   思路也有了,代码基本就出来了:
 #+BEGIN_SRC py

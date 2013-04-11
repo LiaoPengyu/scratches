@@ -31,7 +31,7 @@ print version
 #+BEGIN_SRC bash
 sudo cp pymacs/pymacs.el ~/.emacs.d/YOU/LOAD/PATH
 #+END_SRC
-在~/.emacs.d/init-python-mode.el中加入如下代码,打开python文件时自动打开ropemacs-mode
+在~/.emacs.d/init-local.el中加入如下代码,打开python文件时自动打开ropemacs-mode
 #+BEGIN_SRC el
 (eval-after-load 'python
   '(progn
@@ -68,7 +68,7 @@ purcell的配置已经装了flymake,只需要安装pyflakes
 sudo easy_install pyflakes
 #+END_SRC
 * 将ropemacs集成到auto-complete
-将如下代码添加到init-auto-complete.el
+将如下代码添加到init-local.el
 #+BEGIN_SRC el
 (ac-ropemacs-initialize)
 (add-hook 'python-mode-hook
