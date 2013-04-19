@@ -1,0 +1,50 @@
+#+BEGIN_HTML
+---
+layout: post
+title: STM in clojure -- alter vs. commute
+categories: [STM, Clojure]
+tags : [STM, clojure]
+comments: true
+---
+{% include JB/setup %}
+#+END_HTML
+关于clojure的STM--软件事务内存,网上给了挺多解释,如:
+
+- [[http://sw1nn.com/blog/2012/04/11/clojure-stm-what-why-how/][Clojure STM - What? Why? How?]]
+- [[http://www.slideshare.net/fronx/introduction-to-clojures-stm][Introduction to Clojure's STM]]
+
+对于alter与commute的应用场景介绍:
+
+- [[http://squirrel.pl/blog/2010/07/13/clojure-alter-vs-commute/][Software Transactional Memory in Clojure (alter vs. commute)]]
+- [[http://stackoverflow.com/questions/4999281/ref-set-vs-commute-vs-alter][ref-set vs commute vs alter]]
+
+文章都只是泛泛的文字描述,理解起来还是比较困难,这时候代码才是最好的解释.
+ClojureDocs中[[http://clojuredocs.org/clojure_core/clojure.core/commute][commute的文档]]有个alter与commute的例子,个人感觉没有抓住重点,改了一下,代码如下:
+
+#+BEGIN_SRC clj
+(declare counter)
+(defn alter-inc! [counter]
+         (dosync (Thread/sleep 100) (alter counter #(+ %1 %2) @counter)))
+(defn commute-inc! [counter]
+         (dosync (Thread/sleep 100) (commute counter #(+ %1 %2) @counter)))
+(defn bombard-counter! [n f counter]
+         (apply pcalls (repeat n #(f counter))))
+
+(def counter (ref 1))
+(time (doall (bombard-counter! 5 commute-inc! counter)))
+;; "Elapsed time: 102.452 msecs"
+;; => (2 2 2 2 2)
+;; @counter => 6
+
+(def counter (ref 1))
+(time (doall (bombard-counter! 5 alter-inc! counter)))
+;; "Elapsed time: 506.583 msecs"
+;; => (8 2 32 16 4)
+;; @counter => 32
+#+END_SRC
+
+上述文章都提出了这样一个观点: "commute只适用于顺序无关以及不依赖最新ref的情景".
+上面的例子很好的解释的这一观点:
+- 如果使用commute,在`transaction` commit的时候,仅仅commute的ref参数被替换成最新的ref
+- 如果使用alter,在STM发现ref被修改,`transaction`将重新执行,事务中的alter中的ref将重新获得最新值
+
