@@ -18,8 +18,27 @@ comments: true
 - [[http://squirrel.pl/blog/2010/07/13/clojure-alter-vs-commute/][Software Transactional Memory in Clojure (alter vs. commute)]]
 - [[http://stackoverflow.com/questions/4999281/ref-set-vs-commute-vs-alter][ref-set vs commute vs alter]]
 
-文章都只是泛泛的文字描述,理解起来还是比较困难,这时候代码才是最好的解释.
-ClojureDocs中[[http://clojuredocs.org/clojure_core/clojure.core/commute][commute的文档]]有个alter与commute的例子,个人感觉没有抓住重点,改了一下,代码如下:
+上述文章都提出了这样一个观点: "commute只适用于顺序无关以及不依赖最新ref的情景".
+为什么?这与commute的工作方式有关,ClojureDocs中[[http://clojuredocs.org/clojure_core/clojure.core/commute][commute的文档]]是这么解释的:
+#+BEGIN_QUOTE
+(commute ref fun & args)
+Must be called in a transaction. Sets the in-transaction-value of
+ref to:
+
+(apply fun in-transaction-value-of-ref args)
+
+and returns the in-transaction-value of ref.
+At the commit point of the transaction, sets the value of ref to be:
+
+(apply fun most-recently-committed-value-of-ref args)
+
+Thus fun should be commutative, or, failing that, you must accept
+last-one-in-wins behavior. commute allows for more concurrency than
+ref-set.
+#+END_QUOTE
+
+ClojureDocs给了一个例子解释commute,但我觉得没有抓住重点--"事务不依赖最新ref值"\\
+把代码改了改,觉得好多了:
 
 #+BEGIN_SRC clj
 (declare counter)
@@ -43,8 +62,14 @@ ClojureDocs中[[http://clojuredocs.org/clojure_core/clojure.core/commute][commut
 ;; @counter => 32
 #+END_SRC
 
-上述文章都提出了这样一个观点: "commute只适用于顺序无关以及不依赖最新ref的情景".
-上面的例子很好的解释的这一观点:
-- 如果使用commute,在`transaction` commit的时候,仅仅commute的ref参数被替换成最新的ref
-- 如果使用alter,在STM发现ref被修改,`transaction`将重新执行,事务中的alter中的ref将重新获得最新值
+使用commute,返回的都是2,这在于事务中使用的是过时的数据(stale data),
+而当事务提交(commit)时,只有commute的Ref参数装入新值,而(commute counter #(+ %1 %2) @counter)中的@counter仍然是stale data.
+最终业务结果不像代码表现的那样每次--counter值翻倍.
+
+而alter则不同,发现ref被更改时,事务重新执行,事务所需的ref值将重新拷贝,最终每次事务结束counter结果翻倍.
+
+于是alter与commute的区别在于:
+- 如果使用commute,在`transaction` commit的时候,commute的ref参数被替换成最新的ref
+- 如果使用alter,在STM发现ref被修改,`transaction`将回滚(roll back)重新执行,事务中的alter中的ref将重新获得最新值
+
 
